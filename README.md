@@ -1,95 +1,49 @@
-# Spring Boot Redis Cache
-
+# Spring Boot NCache Cache
 
 Context:
 
-  - [**Getting Started**](#getting-started)
-  - [**Maven Dependencies**](#maven-dependencies)
-  - [**Redis Configuration**](#redis-configuration)
-  - [**Spring Service**](#spring-service)
-  - [**Docker & Docker Compose**](#docker-docker-compose)
-  - [**Build & Run Application**](#build-run-application)
-  - [**Endpoints with Swagger**](#endpoints-with-swagger)
-  - [**Demo**](#demo)
-
+- [Spring Boot NCache Cache](#spring-boot-ncache-cache)
+	- [Getting Started](#getting-started)
+	- [Maven Dependencies](#maven-dependencies)
+	- [NCache Configuration](#ncache-configuration)
+	- [Spring Service](#spring-service)
+	- [Docker \& Docker Compose](#docker--docker-compose)
+	- [Build \& Run Application](#build--run-application)
+	- [Endpoints with Swagger](#endpoints-with-swagger)
+	- [Demo](#demo)
 
 ## Getting Started
 
-In this project, I used Redis for caching with Spring Boot.
-When you send any request to get all customers or customer by id, you will wait 3 seconds if Redis has no related data.
-
+In this project, I used NCache for caching with Spring Boot.
+When you send any request to get all customers or customer by id, you will wait 3 seconds if NCache has no related data.
 
 ## Maven Dependencies
 
-
 ```xml
 <dependency>
-	<groupId>org.springframework.boot</groupId>
-	<artifactId>spring-boot-starter-data-redis</artifactId>
+	<groupId>com.alachisoft</groupId>
+	<artifactId>ncache-spring-boot-starter</artifactId>
+	<version>5.3.0</version>
 </dependency>
-
-<dependency>
-	<groupId>redis.clients</groupId>
-	<artifactId>jedis</artifactId>
-</dependency>
-		
 ```
 
-## Redis Configuration
+## NCache Configuration
 
 ```java
 @Configuration
-@AutoConfigureAfter(RedisAutoConfiguration.class)
 @EnableCaching
-public class RedisConfig {
-
-	@Autowired
-	private CacheManager cacheManager;
-
-	@Value("${spring.redis.host}")
-	private String redisHost;
-
-	@Value("${spring.redis.port}")
-	private int redisPort;
+public class NCacheConfig {
 
 	@Bean
-	public RedisTemplate<String, Serializable> redisCacheTemplate(LettuceConnectionFactory redisConnectionFactory) {
-		RedisTemplate<String, Serializable> template = new RedisTemplate<>();
-		template.setKeySerializer(new StringRedisSerializer());
-		template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-		template.setConnectionFactory(redisConnectionFactory);
-		return template;
+	public CacheManager cacheManager() {
+		return new com.alachisoft.ncache.spring.cache.NCacheManager();
 	}
-
-	@Bean
-	public CacheManager cacheManager(RedisConnectionFactory factory) {
-		RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig();
-		RedisCacheConfiguration redisCacheConfiguration = config
-				.serializeKeysWith(
-						RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-				.serializeValuesWith(RedisSerializationContext.SerializationPair
-						.fromSerializer(new GenericJackson2JsonRedisSerializer()));
-		RedisCacheManager redisCacheManager = RedisCacheManager.builder(factory).cacheDefaults(redisCacheConfiguration)
-				.build();
-		return redisCacheManager;
-	}
-
 }
 ```
 
-
 ## Spring Service
 
-Spring Boot Customer Service Implementation will be like below class.
-I used Spring Boot Cache @Annotaions for caching.
-
-These are:
-
-* `@Cacheable`
-* `@CacheEvict`
-* `@Caching`
-* `@CachceConfig`
-	
+Spring Boot Customer Service Implementation remains the same. The caching annotations like `@Cacheable`, `@CacheEvict`, and `@CacheConfig` work seamlessly with NCache.
 
 ```java
 @Service
@@ -157,20 +111,16 @@ public class CustomerServiceImpl implements CustomerService {
 
 ## Docker & Docker Compose
 
-
 Dockerfile:
 
 ```
 FROM openjdk:8
-ADD ./target/spring-boot-redis-cache-0.0.1-SNAPSHOT.jar /usr/src/spring-boot-redis-cache-0.0.1-SNAPSHOT.jar
+ADD ./target/spring-boot-ncache-cache-0.0.1-SNAPSHOT.jar /usr/src/spring-boot-ncache-cache-0.0.1-SNAPSHOT.jar
 WORKDIR usr/src
-ENTRYPOINT ["java","-jar", "spring-boot-redis-cache-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java","-jar", "spring-boot-ncache-cache-0.0.1-SNAPSHOT.jar"]
 ```
 
 Docker compose file:
-
-
-docker-compose.yml
 
 ```yml
 version: '3'
@@ -185,12 +135,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ekoloji
   cache:
-    image: "redis"
+    image: "alachisoft/ncache"
     ports: 
-      - "6379:6379"
+      - "8250:8250"
+      - "9800:9800"
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+      - NCACHE_SERVER_LICENSE_KEY=your-license-key
   app:
     build: .
     ports:
@@ -199,8 +149,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db/postgres
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ekoloji
-      SPRING_REDIS_HOST: cache
-      SPRING_REDIS_PORT: 6379
+      NCACHE_SERVER=cache
     depends_on:
       - db
       - cache
@@ -211,32 +160,28 @@ services:
 * Build Java Jar.
 
 ```shell
- $ mvn clean install
+$ mvn clean install
 ```
 
-*  Docker Compose Build and Run
+* Docker Compose Build and Run
 
 ```shell
 $ docker-compose build --no-cache
 $ docker-compose up --force-recreate
-
 ```
 
-After running the application you can visit `http://localhost:8080`.	
+After running the application, you can visit `http://localhost:8080`.
 
 ## Endpoints with Swagger
-
 
 You can see the endpoint in `http://localhost:8080/swagger-ui.html` page.
 I used Swagger for visualization endpoints.
 
-
 ![Endpoints](assets/endpoints.png)
-
 
 ## Demo
 
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=4yr4JLRK6MM"><img src="https://img.youtube.com/vi/4yr4JLRK6MM/0.jpg" alt="Spring Boot + Redis + PostgreSQL Caching"></a>
+  <a href="https://www.youtube.com/watch?v=4yr4JLRK6MM"><img src="https://img.youtube.com/vi/4yr4JLRK6MM/0.jpg" alt="Spring Boot + NCache + PostgreSQL Caching"></a>
 </div>
 
