@@ -58,6 +58,13 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Cacheable(cacheNames = "customer", key = "#id", unless = "#result == null")
+	// Cacheable annotation caches the result of the method, 
+	// but first checks if the result is present in the cache.
+	// If it is present, it returns the cached result, without executing the method.
+	// If it is not present, it executes the method and caches the result.
+	// The key is the id of the customer, and the cache name is "customer".
+	// The unless attribute is used to specify a condition under which the result should not be cached.
+	// In this case, if the result is null, it will ofcourse not be cached.
 	@Override
 	public Customer getCustomerById(long id) {
 		waitSomeTime();

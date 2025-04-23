@@ -109,6 +109,7 @@
 									<directory>src/main/resources</directory>
 									<includes>
 										<include>ncache-spring.xml</include>
+										<include>client.ncconf</include>
 									</includes>
 								</resource>
 							</resources>
