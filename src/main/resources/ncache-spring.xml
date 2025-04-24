@@ -1,0 +1,7 @@
+<application-config default-cache-name="customer">
+    <caches>
+        <cache name="customer" ncacheid-instance="democache" priority="normal"
+            expiration-type="absolute" expiration-period="300">
+        </cache>
+    </caches>
+</application-config>
